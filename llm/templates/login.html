@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+
+{% block title %}Login - LLM Gateway{% endblock %}
+
+{% block content %}
+<div style="max-width: 400px; margin: 50px auto;">
+    <div class="card">
+        <h2 style="text-align: center; margin-bottom: 30px;">Admin Login</h2>
+
+        {% if error %}
+            <div class="alert alert-danger">{{ error }}</div>
+        {% endif %}
+
+        <form method="POST" action="/admin/login">
+            <div class="form-group">
+                <label for="password">Admin Password</label>
+                <input type="password" id="password" name="password" required autofocus placeholder="Enter admin password">
+            </div>
+
+            <button type="submit" class="btn" style="width: 100%; padding: 12px;">Login</button>
+        </form>
+
+        <hr style="margin: 20px 0; border: none; border-top: 1px solid #ddd;">
+
+        <div style="text-align: center; color: #999; font-size: 12px;">
+            <p>Default password: <code>admin123</code></p>
+            <p>Change this in your <code>.env</code> file for production!</p>
+        </div>
+
+        <div style="text-align: center; margin-top: 20px;">
+            <p><a href="/" style="color: #667eea; text-decoration: none;">← Back to Home</a></p>
+        </div>
+    </div>
+</div>
+{% endblock %}
