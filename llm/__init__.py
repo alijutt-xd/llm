@@ -1,4 +1,5 @@
 from flask import Flask
+from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
 
 from llm.config import Config
@@ -13,8 +14,9 @@ from llm.lib.scheduler import Scheduler
 
 def create_app(config_class=Config):
     """Application factory."""
-    app = Flask(__name__)
+    app = Flask(__name__, template_folder="templates", static_folder="static")
     app.config.from_object(config_class)
+    app.secret_key = config_class.SECRET_KEY
 
     # Initialize extensions
     init_extensions(app)
