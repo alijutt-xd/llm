@@ -1,97 +1,253 @@
-# LLM Gateway - Python Flask
+# LLM Gateway
 
-**Author:** Ali Jutt
+Professional Python Flask project for smart routing, provider management, and OpenAI-compatible LLM access.
 
-**Original Project:** [FreeLLMAPI](https://github.com/tashfeenahmed/freellmapi) (TypeScript/Node.js)
+Project Name: llm
+Author: Ali Jutt
 
-A Python Flask-based OpenAI-compatible LLM API gateway that aggregates multiple free and paid LLM providers behind a single `/v1` endpoint.
+This repository is a Python Flask implementation inspired by the architecture of FreeLLMAPI, designed for multi-provider LLM routing behind a single OpenAI-compatible API.
+
+## Overview
+
+LLM Gateway provides:
+
+- OpenAI-compatible endpoints for chat, completion, and embeddings
+- Multi-provider routing and provider management
+- Admin dashboard for adding and testing provider API keys
+- Password-protected admin access
+- Environment-based configuration
+- Support for local development and Termux-based Android deployment
+- Docker and gunicorn production deployment support
 
 ## Features
 
-- **OpenAI-compatible API** — `/v1/chat/completions`, `/v1/completions`, `/v1/embeddings`
-- **Multi-provider support** — Route to 34+ LLM providers
-- **Smart routing** — Automatic provider selection based on model and priority
-- **Failover support** — Automatic retry with fallback providers
-- **Encrypted keys** — AES-256-GCM encryption for API keys
-- **Response caching** — Optional in-memory/persistent cache
-- **Health checks** — Periodic provider health monitoring
-- **Rate limiting** — Per-IP and per-key rate limiting
-- **Admin dashboard API** — Manage providers and configuration
-- **Streaming** — Support for streaming responses
-- **Production-ready** — Docker support, error handling, logging
+- Flask server with production-ready structure
+- /v1/chat/completions support
+- /v1/completions support
+- /v1/embeddings support
+- /health status endpoint
+- provider registry and routing management
+- secure admin interface for provider key management
+- optional response caching
+- environment configuration using .env
+- CORS support
+- Docker-ready deployment
+- mobile-friendly and lightweight installation
 
-## Quick Start
+## Project Structure
 
-### 1. Clone and Setup
+```text
+llm/
+├── app.py
+├── wsgi.py
+├── requirements.txt
+├── .env.example
+├── Dockerfile
+├── docker-compose.yml
+├── README.md
+├── llm/
+│   ├── __init__.py
+│   ├── config.py
+│   ├── extensions.py
+│   ├── models.py
+│   ├── routes/
+│   │   ├── __init__.py
+│   │   ├── api.py
+│   │   ├── admin.py
+│   │   └── auth.py
+│   ├── services/
+│   │   ├── __init__.py
+│   │   ├── cache_service.py
+│   │   ├── catalog_service.py
+│   │   ├── health_service.py
+│   │   └── provider_service.py
+│   ├── lib/
+│   │   └── scheduler.py
+│   ├── templates/
+│   │   └── admin/
+│   │       ├── login.html
+│   │       └── dashboard.html
+│   └── static/
+└── .gitignore
+```
+
+## Requirements
+
+- Python 3.10+
+- pip
+- virtualenv (recommended)
+- Optional: Android/Termux environment
+- Optional: Docker
+
+## Installation
+
+### Standard Linux / macOS
+
+```bash
+git clone https://github.com/alijutt-xd/llm.git
+cd llm
+python3 -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+cp .env.example .env
+```
+
+### Windows
 
 ```bash
 git clone https://github.com/alijutt-xd/llm.git
 cd llm
 python -m venv venv
-```
-
-**Linux/macOS:**
-```bash
-source venv/bin/activate
-```
-
-**Windows:**
-```bash
 venv\Scripts\activate
-```
-
-### 2. Install Dependencies
-
-```bash
 pip install -r requirements.txt
+copy .env.example .env
 ```
 
-### 3. Configure Environment
+### Termux (Android)
+
+Termux is supported for running the project on Android devices.
 
 ```bash
+pkg update
+pkg install python git clang libffi openssl
+python -m venv venv
+source venv/bin/activate
+pip install --upgrade pip
+pip install -r requirements.txt
 cp .env.example .env
-# Edit .env with your configuration
 ```
 
-### 4. Run Server
+For local access from a phone browser:
 
-**Development:**
 ```bash
 python app.py
 ```
 
-**Production:**
+Then open:
+
+- http://localhost:5000
+- http://127.0.0.1:5000
+
+If you want external access from another device on the same network, run:
+
 ```bash
-gunicorn -w 4 -b 0.0.0.0:5000 wsgi:app
+export HOST=0.0.0.0
+python app.py
 ```
 
-Server will be available at `http://localhost:5000`
+Then access using your device IP:
 
-## API Endpoints
+```bash
+http://YOUR_ANDROID_IP:5000
+```
 
-### Health Check
+## Environment Configuration
+
+Create `.env` from `.env.example` and update the values.
+
+```bash
+cp .env.example .env
+```
+
+Example variables:
+
+```env
+APP_NAME=llm
+APP_AUTHOR=Ali Jutt
+SECRET_KEY=your_secret_key_here
+PORT=5000
+HOST=0.0.0.0
+FLASK_ENV=development
+DATABASE_URL=sqlite:///llm.db
+ENCRYPTION_KEY=your_encryption_key_here
+ADMIN_PASSWORD=admin123
+```
+
+Security note:
+
+- Always change the default admin password before deployment.
+- Never commit real API keys to GitHub.
+- Use a strong secret key in production.
+
+## Running the Project
+
+### Development
+
+```bash
+python app.py
+```
+
+### Production with Gunicorn
+
+```bash
+gunicorn --bind 0.0.0.0:5000 wsgi:app
+```
+
+### Docker
+
+```bash
+docker build -t llm .
+docker run -p 5000:5000 llm
+```
+
+or
+
+```bash
+docker-compose up --build
+```
+
+## Admin Panel
+
+The project includes a password-protected admin dashboard that allows you to:
+
+- add providers
+- edit provider settings
+- remove providers
+- test provider keys
+- view provider stats
+
+Access:
+
+```text
+http://localhost:5000/admin/login
+```
+
+Default admin password:
+
+```text
+admin123
+```
+
+Change this in `.env`:
+
+```env
+ADMIN_PASSWORD=your_secure_password
+```
+
+## API Usage
+
+### Health check
 
 ```bash
 curl http://localhost:5000/health
 ```
 
-Response:
+Example response:
+
 ```json
 {
   "status": "ok",
-  "service": "llm-gateway",
-  "author": "Ali Jutt",
-  "providers_count": 5
+  "service": "llm-gateway"
 }
 ```
 
-### List Models
+### List models
 
 ```bash
 curl http://localhost:5000/v1/models
 ```
 
-### Chat Completions
+### Chat completions
 
 ```bash
 curl -X POST http://localhost:5000/v1/chat/completions \
@@ -99,197 +255,131 @@ curl -X POST http://localhost:5000/v1/chat/completions \
   -d '{
     "model": "gpt-4o-mini",
     "messages": [
-      {"role": "user", "content": "Hello!"}
+      {"role": "user", "content": "Hello from LLM Gateway"}
     ]
   }'
 ```
 
-### Streaming
+### Completions
 
 ```bash
-curl -X POST http://localhost:5000/v1/chat/completions \
+curl -X POST http://localhost:5000/v1/completions \
   -H "Content-Type: application/json" \
   -d '{
     "model": "gpt-4o-mini",
-    "messages": [{"role": "user", "content": "Say hello"}],
-    "stream": true
+    "prompt": "Write a short greeting",
+    "max_tokens": 100
   }'
 ```
 
-### Admin Endpoints
+### Embeddings
 
-#### List Providers
 ```bash
-curl http://localhost:5000/admin/providers
+curl -X POST http://localhost:5000/v1/embeddings \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "text-embedding-3-small",
+    "input": ["hello world", "goodbye world"]
+  }'
 ```
 
-#### Add Provider
+## Provider Management
+
+Providers can be managed from the admin panel or via API requests.
+
+### Add a provider
+
 ```bash
 curl -X POST http://localhost:5000/admin/providers \
   -H "Content-Type: application/json" \
   -d '{
-    "name": "my-openai",
+    "name": "openai-test",
     "provider_type": "openai-compatible",
     "base_url": "https://api.openai.com",
-    "api_key": "sk-...",
+    "api_key": "sk-xxxxxxxx",
+    "api_key_header": "Authorization",
+    "api_key_prefix": "Bearer",
     "models": ["gpt-4o", "gpt-4o-mini"],
-    "priority": 1
+    "priority": 1,
+    "enabled": true,
+    "timeout_ms": 60000,
+    "rate_limit_rpm": 60
   }'
 ```
 
-#### Delete Provider
+### Delete a provider
+
 ```bash
-curl -X DELETE http://localhost:5000/admin/providers/my-openai
+curl -X DELETE http://localhost:5000/admin/providers/openai-test
 ```
 
-## Configuration
+### List providers
 
-All configuration is done via `.env` file. Key variables:
-
-- `PORT` — Server port (default: 5000)
-- `HOST` — Server host (default: ::)
-- `FLASK_ENV` — Environment (development/production)
-- `SECRET_KEY` — Session encryption key
-- `ENCRYPTION_KEY` — Provider key encryption key
-- `RESPONSE_CACHE` — Enable response caching (true/false)
-- `PROXY_RATE_LIMIT_RPM` — Proxy rate limit (requests/minute)
-- `PROVIDER_TIMEOUT_DEFAULT` — Default provider timeout (ms)
-
-## Docker
-
-### Build
 ```bash
-docker build -t llm .
+curl http://localhost:5000/admin/providers
 ```
 
-### Run
-```bash
-docker run -p 5000:5000 -e SECRET_KEY=your-key llm
-```
+## Security Notes
 
-### Docker Compose
-```bash
-docker-compose up
-```
+- Admin dashboard is protected by a password
+- Provider API keys should be stored securely
+- Production should use a strong SECRET_KEY and ADMIN_PASSWORD
+- Avoid exposing sensitive data in logs
+- Use HTTPS in production
 
-## Supported Providers
+## Production Deployment Advice
 
-- OpenAI (gpt-4o, gpt-3.5-turbo, etc.)
-- Anthropic (Claude, etc.)
-- Google (Gemini, etc.)
-- Groq (Llama, Mixtral, etc.)
-- Mistral
-- OpenRouter
-- Cohere
-- HuggingFace
-- Ollama
-- Custom OpenAI-compatible endpoints
+For production deployment:
 
-## Security
-
-- Provider API keys are encrypted with AES-256-GCM
-- No secrets logged or exposed in responses
-- Rate limiting per IP and per key
-- CORS configured for authorized origins only
-- Input validation on all endpoints
-- Secure error handling without stack trace leakage
-
-## Performance
-
-- Streaming support for efficient large responses
-- Connection pooling with persistent HTTP clients
-- Response caching with configurable TTL
-- Asynchronous background tasks for health checks
-- Adaptive timeouts based on provider performance
-
-## Development
-
-### Run Tests
-```bash
-python -m pytest
-```
-
-### Lint Code
-```bash
-pflake8 llm/
-```
-
-### Format Code
-```bash
-black llm/
-```
+- change SECRET_KEY
+- change ADMIN_PASSWORD
+- set HOST to 0.0.0.0
+- use a reverse proxy like Nginx or Caddy
+- enable HTTPS
+- use gunicorn workers
+- backup .env and database files
 
 ## Troubleshooting
 
-### Port Already in Use
+### Port already in use
+
 ```bash
 lsof -i :5000
-kill -9 <PID>
 ```
 
-### Database Errors
+Then kill the process or change the port in `.env`.
+
+### Termux issues
+
+If pip install fails:
+
 ```bash
-rm llm.db  # Remove SQLite database and reinitialize
+pkg upgrade
+pkg install build-essential openssl libffi clang
 ```
 
-### Provider Connection Issues
-- Check API key validity
-- Verify base URL is correct
-- Check network/proxy settings
-- Review provider rate limits
+### Module import errors
 
-## Production Deployment
-
-### Render
-1. Push to GitHub
-2. Connect repository to Render
-3. Set environment variables
-4. Deploy
-
-### Railway
-1. Push to GitHub
-2. Connect repository to Railway
-3. Set environment variables
-4. Deploy
-
-### VPS/Server
 ```bash
-# Install Python 3.10+
-sudo apt install python3 python3-pip
-
-# Clone repository
-git clone <repo-url>
-cd llm
-
-# Setup
-python3 -m venv venv
-source venv/bin/activate
 pip install -r requirements.txt
+```
 
-# Create .env with production settings
-cp .env.example .env
-# Edit .env
+### Admin login not working
 
-# Run with systemd/supervisor
-gunicorn -w 4 -b 0.0.0.0:5000 wsgi:app
+Check the value in `.env`:
+
+```env
+ADMIN_PASSWORD=your_secure_password
 ```
 
 ## License
 
-MIT — See LICENSE file
-
-## Contributing
-
-Contributions welcome! Please:
-
-1. Fork the repository
-2. Create a feature branch
-3. Submit a pull request
+MIT License
 
 ## Author
 
-**Ali Jutt** — [GitHub](https://github.com/alijutt-xd)
+Ali Jutt
 
-## Original Project
+## Original Inspiration
 
-This is a Python/Flask migration of [FreeLLMAPI](https://github.com/tashfeenahmed/freellmapi) by Tashfeen Ahmed.
+This project is inspired by and modeled after the functionality of FreeLLMAPI while being implemented in Python Flask.
