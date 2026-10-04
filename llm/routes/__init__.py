@@ -1,7 +1,12 @@
-"""Routes module."""
+"""Routes package exports.
 
-from flask import Blueprint
+This file must re-export the actual blueprint instances from the route modules.
+A common Flask bug is to define separate Blueprint objects in __init__.py and
+then never register the real route blueprints from admin.py / api.py / auth.py.
+"""
 
-api_bp = Blueprint("api", __name__, url_prefix="/v1")
-admin_bp = Blueprint("admin", __name__, url_prefix="/admin")
-auth_bp = Blueprint("auth", __name__, url_prefix="/auth")
+from .admin import admin_bp
+from .api import api_bp
+from .auth import auth_bp
+
+__all__ = ["api_bp", "admin_bp", "auth_bp"]
