@@ -1,15 +1,19 @@
-# .gitignore
+*.pyc
 __pycache__/
-*.py[cod]
-*.pyo
-*.pyd
 .venv/
 venv/
 .env
-*.sqlite3
+.env.local
+*.db
+*.db-shm
+*.db-wal
 .DS_Store
 .pytest_cache/
 .coverage
 htmlcov/
 .idea/
 .vscode/
+*.egg-info/
+dist/
+build/
+.mypy_cache/

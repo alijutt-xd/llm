@@ -1,89 +1,295 @@
-# llm
+# LLM Gateway - Python Flask
 
-Author: ALi Jutt
+**Author:** Ali Jutt
 
-A Python Flask project that exposes an OpenAI-compatible API for routing requests to multiple free or custom LLM providers behind a single `/v1` endpoint.
+**Original Project:** [FreeLLMAPI](https://github.com/tashfeenahmed/freellmapi) (TypeScript/Node.js)
+
+A Python Flask-based OpenAI-compatible LLM API gateway that aggregates multiple free and paid LLM providers behind a single `/v1` endpoint.
 
 ## Features
-- OpenAI-compatible `/v1/chat/completions`
-- OpenAI-compatible `/v1/models`
-- OpenAI-compatible `/v1/completions`
-- OpenAI-compatible `/v1/embeddings`
-- Multi-provider registry
-- Smart routing by model
-- Automatic failover support
-- Encrypted provider API keys
-- Health endpoint
-- Admin provider registration
 
-## Quick start
+- **OpenAI-compatible API** — `/v1/chat/completions`, `/v1/completions`, `/v1/embeddings`
+- **Multi-provider support** — Route to 34+ LLM providers
+- **Smart routing** — Automatic provider selection based on model and priority
+- **Failover support** — Automatic retry with fallback providers
+- **Encrypted keys** — AES-256-GCM encryption for API keys
+- **Response caching** — Optional in-memory/persistent cache
+- **Health checks** — Periodic provider health monitoring
+- **Rate limiting** — Per-IP and per-key rate limiting
+- **Admin dashboard API** — Manage providers and configuration
+- **Streaming** — Support for streaming responses
+- **Production-ready** — Docker support, error handling, logging
 
-1. Create a virtual environment
-   ```bash
-   python -m venv .venv
-   source .venv/bin/activate
-   ```
+## Quick Start
 
-2. Install dependencies
-   ```bash
-   pip install -r requirements.txt
-   ```
+### 1. Clone and Setup
 
-3. Create your environment file
-   ```bash
-   cp .env.example .env
-   ```
-
-4. Update your provider config
-   Edit `llm/data/providers.json` and set a real API base URL and key.
-
-5. Run the app
-   ```bash
-   python app.py
-   ```
-
-## API examples
-
-### Health check
 ```bash
-curl http://localhost:5000/v1/health
+git clone https://github.com/alijutt-xd/llm.git
+cd llm
+python -m venv venv
 ```
 
-### List models
+**Linux/macOS:**
+```bash
+source venv/bin/activate
+```
+
+**Windows:**
+```bash
+venv\Scripts\activate
+```
+
+### 2. Install Dependencies
+
+```bash
+pip install -r requirements.txt
+```
+
+### 3. Configure Environment
+
+```bash
+cp .env.example .env
+# Edit .env with your configuration
+```
+
+### 4. Run Server
+
+**Development:**
+```bash
+python app.py
+```
+
+**Production:**
+```bash
+gunicorn -w 4 -b 0.0.0.0:5000 wsgi:app
+```
+
+Server will be available at `http://localhost:5000`
+
+## API Endpoints
+
+### Health Check
+
+```bash
+curl http://localhost:5000/health
+```
+
+Response:
+```json
+{
+  "status": "ok",
+  "service": "llm-gateway",
+  "author": "Ali Jutt",
+  "providers_count": 5
+}
+```
+
+### List Models
+
 ```bash
 curl http://localhost:5000/v1/models
 ```
 
-### Chat completions
+### Chat Completions
+
 ```bash
 curl -X POST http://localhost:5000/v1/chat/completions \
   -H "Content-Type: application/json" \
   -d '{
     "model": "gpt-4o-mini",
     "messages": [
-      {"role": "user", "content": "Hello from llm"}
+      {"role": "user", "content": "Hello!"}
     ]
   }'
 ```
 
-### Add a provider
+### Streaming
+
+```bash
+curl -X POST http://localhost:5000/v1/chat/completions \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "gpt-4o-mini",
+    "messages": [{"role": "user", "content": "Say hello"}],
+    "stream": true
+  }'
+```
+
+### Admin Endpoints
+
+#### List Providers
+```bash
+curl http://localhost:5000/admin/providers
+```
+
+#### Add Provider
 ```bash
 curl -X POST http://localhost:5000/admin/providers \
   -H "Content-Type: application/json" \
   -d '{
-    "name": "my-provider",
-    "base_url": "https://example.com/v1",
-    "api_key": "my-key",
-    "enabled": true,
-    "models": ["gpt-4o-mini", "llama-3.1-70b"],
-    "priority": 2
+    "name": "my-openai",
+    "provider_type": "openai-compatible",
+    "base_url": "https://api.openai.com",
+    "api_key": "sk-...",
+    "models": ["gpt-4o", "gpt-4o-mini"],
+    "priority": 1
   }'
 ```
 
-## Notes
-- The project is intentionally designed to act like a central OpenAI-compatible gateway.
-- The default provider is disabled to prevent accidental requests.
-- API keys are encrypted before being written to the provider config.
+#### Delete Provider
+```bash
+curl -X DELETE http://localhost:5000/admin/providers/my-openai
+```
+
+## Configuration
+
+All configuration is done via `.env` file. Key variables:
+
+- `PORT` — Server port (default: 5000)
+- `HOST` — Server host (default: ::)
+- `FLASK_ENV` — Environment (development/production)
+- `SECRET_KEY` — Session encryption key
+- `ENCRYPTION_KEY` — Provider key encryption key
+- `RESPONSE_CACHE` — Enable response caching (true/false)
+- `PROXY_RATE_LIMIT_RPM` — Proxy rate limit (requests/minute)
+- `PROVIDER_TIMEOUT_DEFAULT` — Default provider timeout (ms)
+
+## Docker
+
+### Build
+```bash
+docker build -t llm .
+```
+
+### Run
+```bash
+docker run -p 5000:5000 -e SECRET_KEY=your-key llm
+```
+
+### Docker Compose
+```bash
+docker-compose up
+```
+
+## Supported Providers
+
+- OpenAI (gpt-4o, gpt-3.5-turbo, etc.)
+- Anthropic (Claude, etc.)
+- Google (Gemini, etc.)
+- Groq (Llama, Mixtral, etc.)
+- Mistral
+- OpenRouter
+- Cohere
+- HuggingFace
+- Ollama
+- Custom OpenAI-compatible endpoints
+
+## Security
+
+- Provider API keys are encrypted with AES-256-GCM
+- No secrets logged or exposed in responses
+- Rate limiting per IP and per key
+- CORS configured for authorized origins only
+- Input validation on all endpoints
+- Secure error handling without stack trace leakage
+
+## Performance
+
+- Streaming support for efficient large responses
+- Connection pooling with persistent HTTP clients
+- Response caching with configurable TTL
+- Asynchronous background tasks for health checks
+- Adaptive timeouts based on provider performance
+
+## Development
+
+### Run Tests
+```bash
+python -m pytest
+```
+
+### Lint Code
+```bash
+pflake8 llm/
+```
+
+### Format Code
+```bash
+black llm/
+```
+
+## Troubleshooting
+
+### Port Already in Use
+```bash
+lsof -i :5000
+kill -9 <PID>
+```
+
+### Database Errors
+```bash
+rm llm.db  # Remove SQLite database and reinitialize
+```
+
+### Provider Connection Issues
+- Check API key validity
+- Verify base URL is correct
+- Check network/proxy settings
+- Review provider rate limits
+
+## Production Deployment
+
+### Render
+1. Push to GitHub
+2. Connect repository to Render
+3. Set environment variables
+4. Deploy
+
+### Railway
+1. Push to GitHub
+2. Connect repository to Railway
+3. Set environment variables
+4. Deploy
+
+### VPS/Server
+```bash
+# Install Python 3.10+
+sudo apt install python3 python3-pip
+
+# Clone repository
+git clone <repo-url>
+cd llm
+
+# Setup
+python3 -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+
+# Create .env with production settings
+cp .env.example .env
+# Edit .env
+
+# Run with systemd/supervisor
+gunicorn -w 4 -b 0.0.0.0:5000 wsgi:app
+```
 
 ## License
-This project is provided for personal experimentation and local use.
+
+MIT — See LICENSE file
+
+## Contributing
+
+Contributions welcome! Please:
+
+1. Fork the repository
+2. Create a feature branch
+3. Submit a pull request
+
+## Author
+
+**Ali Jutt** — [GitHub](https://github.com/alijutt-xd)
+
+## Original Project
+
+This is a Python/Flask migration of [FreeLLMAPI](https://github.com/tashfeenahmed/freellmapi) by Tashfeen Ahmed.

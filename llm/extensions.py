@@ -1,3 +1,9 @@
-def register_extensions(app):
-    app.config.setdefault("JSON_SORT_KEYS", False)
+from flask_sqlalchemy import SQLAlchemy
+
+db = SQLAlchemy()
+
+
+def init_extensions(app):
+    """Initialize Flask extensions."""
+    db.init_app(app)
     return app

@@ -1,7 +1,25 @@
+# LLM Gateway - Python Flask Version
+# Author: Ali Jutt
+# Original Project: FreeLLMAPI (TypeScript/Node.js)
+# Description: 7.4B tokens/month. 34+ free LLM providers. 635+ free model endpoints.
+# All behind one /v1 endpoint with smart routing, automatic failover, and encrypted keys.
+
 Flask==3.0.3
 Werkzeug==3.0.3
 requests==2.32.3
+httpx==0.26.0
 python-dotenv==1.0.1
 cryptography==42.0.8
-Flask-Cors==4.0.1
+Flask-CORS==4.0.1
 gunicorn==22.0.0
+sqlalchemy==2.0.25
+pydantic==2.6.4
+pydantic-settings==2.2.1
+apscheduler==3.10.4
+fastapi==0.104.1
+uvicorn==0.24.0
+python-multipart==0.0.6
+pyyaml==6.0.1
+pillow==10.1.0
+sharp>=0.35.0
+zod==0.2.0

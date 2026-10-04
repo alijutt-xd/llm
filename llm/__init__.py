@@ -1,36 +1,62 @@
 from flask import Flask
 from flask_cors import CORS
 
-from .config import Config
-from .extensions import register_extensions
-from .routes.api import api_bp
-from .routes.admin import admin_bp
-from .services.provider_manager import ProviderManager
+from llm.config import Config
+from llm.extensions import db, init_extensions
+from llm.routes import api_bp, admin_bp, auth_bp
+from llm.services.provider_service import ProviderService
+from llm.services.catalog_service import CatalogService
+from llm.services.health_service import HealthService
+from llm.services.cache_service import CacheService
+from llm.lib.scheduler import Scheduler
 
 
 def create_app(config_class=Config):
+    """Application factory."""
     app = Flask(__name__)
     app.config.from_object(config_class)
 
-    CORS(app, resources={r"/v1/*": {"origins": "*"}})
-    register_extensions(app)
+    # Initialize extensions
+    init_extensions(app)
 
-    app.provider_manager = ProviderManager(
-        config_path=app.config["PROVIDERS_CONFIG_PATH"],
-        secret_key=app.config["SECRET_KEY"],
+    # CORS setup
+    CORS(
+        app,
+        resources={
+            r"/v1/*": {"origins": "*"},
+            r"/v1beta/*": {"origins": "*"},
+            r"/mcp/*": {"origins": "*"},
+        },
     )
-    app.provider_manager.load()
 
+    # Initialize core services
+    app.provider_service = ProviderService(db)
+    app.catalog_service = CatalogService(db, app.provider_service)
+    app.health_service = HealthService(app.provider_service, db)
+    app.cache_service = CacheService(db) if app.config.get("RESPONSE_CACHE") else None
+    app.scheduler = Scheduler()
+
+    # Register blueprints
+    app.register_blueprint(auth_bp)
     app.register_blueprint(api_bp)
     app.register_blueprint(admin_bp)
 
+    # Health check endpoint
     @app.get("/")
     def index():
         return {
             "project": "llm",
-            "author": "ALi Jutt",
+            "author": "Ali Jutt",
             "status": "running",
+            "version": "0.1.0",
             "docs": "/v1/models",
         }
+
+    @app.get("/health")
+    def health():
+        return {"status": "ok", "service": "llm-gateway"}
+
+    with app.app_context():
+        db.create_all()
 
     return app

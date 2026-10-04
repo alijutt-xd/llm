@@ -1,1 +1,1 @@
-"""Service package for llm."""
+"""Services module."""
